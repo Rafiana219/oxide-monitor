@@ -1,0 +1,113 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oxide Monitor</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <h2>OXIDE<span> MONITOR</span></h2>
+        <p class="nav-label">MONITORING</p>
+        <a class="nav-item active" href="#">Bot Overview</a>
+        <a class="nav-item" href="#commands">Command History</a>
+        <div class="sidebar-footer">Local Environment</div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">SYSTEM MONITORING</p>
+                <h1>Bot Overview</h1>
+                <p class="subtitle">Monitor and manage your bot agents.</p>
+            </div>
+            <button id="refresh-btn" class="secondary-btn">↻ Refresh</button>
+        </header>
+
+        <section class="summary-grid">
+            <article class="summary-card">
+                <p>Total Bots</p>
+                <strong id="total-bots">—</strong>
+                <span>Registered agents</span>
+            </article>
+            <article class="summary-card">
+                <p>Online</p>
+                <strong id="online-bots">—</strong>
+                <span>Active agents</span>
+            </article>
+            <article class="summary-card">
+                <p>Offline</p>
+                <strong id="offline-bots">—</strong>
+                <span>Inactive agents</span>
+            </article>
+            <article class="summary-card">
+                <p>Errors</p>
+                <strong id="error-bots">—</strong>
+                <span>Agents requiring attention</span>
+            </article>
+        </section>
+
+        <section class="panel">
+            <div class="panel-heading">
+                <div>
+                    <h2>Bot Agents</h2>
+                    <p>Current status and resource utilization</p>
+                </div>
+                <span id="last-updated" class="muted">Not loaded</span>
+            </div>
+
+            <div id="message" class="message" role="status" aria-live="polite"></div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Bot</th>
+                            <th>Status</th>
+                            <th>CPU</th>
+                            <th>Memory</th>
+                            <th>Uptime</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bots-table">
+                        <tr><td colspan="6">Loading bot agents...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="commands" class="panel">
+            <div class="panel-heading">
+                <div>
+                    <h2>Command History</h2>
+                    <p>Recent commands issued to bot agents</p>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Command ID</th>
+                            <th>Bot</th>
+                            <th>Command</th>
+                            <th>Status</th>
+                            <th>Requested By</th>
+                            <th>Created At</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table">
+                        <tr><td colspan="6">Select a bot or refresh to load history.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer>Oxide Monitor · Local Development</footer>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
