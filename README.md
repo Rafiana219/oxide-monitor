@@ -13,8 +13,10 @@ Oxide Monitor provides a local interface for monitoring bot status, sending bot 
 - Store bot commands and audit logs in PostgreSQL.
 - Display bot status, CPU usage, memory usage, uptime, and command history.
 - Create and track orders with idempotency checks and status-transition validation.
-- Provide a system kill switch to temporarily disable new order creation.
+- Provide a global kill switch that blocks new order creation and bot `start`/`restart` commands while enabled.
+- Allow `stop` and `status` commands while the kill switch is enabled, so operators can still inspect or stop bots.
 - Include automated unit tests for order status transitions.
+
 
 ## Tech Stack
 
@@ -215,6 +217,10 @@ Additional API scenarios to verify manually:
 - Creating an order with an existing external order ID and different order data returns a conflict.
 - Invalid order status transitions are rejected.
 - Enabling the kill switch prevents new orders from being created.
+- Enabling the kill switch prevents new orders from being created.
+- While the kill switch is enabled, `start` and `restart` bot commands are rejected.
+- While the kill switch is enabled, `stop` and `status` commands remain available.
+- Disabling the kill switch restores normal order creation and bot start/restart commands.
 
 ## Database and Environment Notes
 
@@ -222,7 +228,7 @@ Additional API scenarios to verify manually:
 - The Bot Simulator runs locally on port `8788`.
 - The Go backend and dashboard run on port `3000`.
 - Bot status and metrics are supplied by the simulator; CPU and memory values are mock data, not measurements of real machines.
-- The kill-switch state is stored in application memory and resets when the backend restarts.
+- The kill-switch state is stored in application memory and resets when the backend restarts. It is not persisted in PostgreSQL.
 - The provided database schema is used without additional migrations.
 
 ## Constraints
