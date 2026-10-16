@@ -126,7 +126,20 @@ async function loadOrderSummary() {
 
     try {
         const data = await apiRequest("/api/orders");
-        const orders = Array.isArray(data?.value) ? data.value : [];
+
+        const orders = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.value)
+                ? data.value
+                : Array.isArray(data?.orders)
+                    ? data.orders
+                    : null;
+
+        if (!orders) {
+            elements.inProgress.textContent = "—";
+            console.error("Unexpected orders API response:", data);
+            return;
+        }
 
         elements.inProgress.textContent = orders.filter((order) => {
             const status = String(order.status || "").toLowerCase();
@@ -148,6 +161,8 @@ async function loadBots() {
     elements.online.textContent = bots.filter((bot) => bot.status === "online").length;
     elements.offline.textContent = bots.filter((bot) => bot.status === "offline").length;
     elements.errors.textContent = bots.filter((bot) => bot.status === "error").length;
+    elements.active.textContent = bots.filter((bot) => bot.status === "active").length;
+    elements.standby.textContent = bots.filter((bot) => bot.status === "standby").length;
 
     const hasActiveStatus = bots.some(
         (bot) => ["active", "running"].includes(String(bot.status || "").toLowerCase())
