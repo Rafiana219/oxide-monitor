@@ -11,7 +11,20 @@ const elements = {
     message: document.getElementById("message"),
     updated: document.getElementById("last-updated"),
     refresh: document.getElementById("refresh-btn"),
+
+    active: document.getElementById("active-bots"),
+    standby: document.getElementById("standby-bots"),
+    inProgress: document.getElementById("in-progress-orders"),
+    killSwitchStatus: document.getElementById("kill-switch-status"),
+    killSwitchButton: document.getElementById("kill-switch-btn"),
 };
+
+console.table(
+    Object.entries(elements).map(([name, element]) => ({
+        name,
+        found: element !== null,
+    }))
+);
 
 let busyBots = new Set();
 
@@ -94,14 +107,67 @@ async function apiRequest(path, options = {}) {
     return data;
 }
 
+
+async function loadKillSwitch() {
+    const data = await apiRequest("/api/system/kill-switch");
+
+    elements.killSwitchStatus.textContent = data.enabled
+        ? "ENABLED — New orders blocked"
+        : "DISABLED — Normal operation";
+
+    elements.killSwitchButton.textContent = data.enabled
+        ? "Disable Kill Switch"
+        : "Enable Kill Switch";
+}
+
+
+async function loadOrderSummary() {
+    if (!elements.inProgress) return;
+
+    try {
+        const data = await apiRequest("/api/orders");
+        const orders = Array.isArray(data?.value) ? data.value : [];
+
+        elements.inProgress.textContent = orders.filter((order) => {
+            const status = String(order.status || "").toLowerCase();
+            return status === "processing" ||
+                   status === "in_progress";
+        }).length;
+    } catch (error) {
+        elements.inProgress.textContent = "—";
+        console.error("Could not load order summary:", error);
+    }
+}
+
 async function loadBots() {
     const data = await apiRequest("/api/bots");
     const bots = Array.isArray(data?.value) ? data.value : [];
 
     elements.total.textContent = bots.length;
+
     elements.online.textContent = bots.filter((bot) => bot.status === "online").length;
     elements.offline.textContent = bots.filter((bot) => bot.status === "offline").length;
     elements.errors.textContent = bots.filter((bot) => bot.status === "error").length;
+
+    const hasActiveStatus = bots.some(
+        (bot) => ["active", "running"].includes(String(bot.status || "").toLowerCase())
+    );
+    const hasStandbyStatus = bots.some(
+        (bot) => String(bot.status || "").toLowerCase() === "standby"
+    );
+
+    if (elements.active) {
+        elements.active.textContent = hasActiveStatus
+            ? bots.filter((bot) => ["active", "running"].includes(String(bot.status || "").toLowerCase())).length
+            : "N/A";
+    }
+
+    if (elements.standby) {
+        elements.standby.textContent = hasStandbyStatus
+            ? bots.filter((bot) => String(bot.status || "").toLowerCase() === "standby").length
+        : "N/A";
+    }
+
 
     if (bots.length === 0) {
         elements.bots.innerHTML =
@@ -242,27 +308,50 @@ async function sendCommand(botId, command) {
 }
 
 
+
 async function refreshDashboard() {
     elements.refresh.disabled = true;
     clearMessage();
 
     try {
+        console.log("[1] Syncing bots...");
         const syncResponse = await fetch(`${API_BASE}/api/bots/live`);
 
         if (!syncResponse.ok) {
             throw new Error(`Bot sync failed: HTTP ${syncResponse.status}`);
         }
 
+        console.log("[2] Loading bots...");
         await loadBots();
+
+        console.log("[3] Loading kill switch status...");
+        await loadKillSwitch();
+
+        console.log("[4] Loading order summary...");
+        await loadOrderSummary();
+
+        console.log("[5] Loading command history...");
         await loadAllHistory();
+
+        console.log("[5] Dashboard loaded successfully.");
     } catch (error) {
-        showMessage(`Could not load bots: ${error.message}`, "error");
-        elements.bots.innerHTML =
-            '<tr><td colspan="6" class="empty">Failed to load bot agents.</td></tr>';
+        console.error("[Dashboard error]", error);
+
+        if (elements.message) {
+            elements.message.textContent =
+                `Dashboard error: ${error.message}`;
+            elements.message.className = "message visible error";
+        }
+
+        if (elements.bots) {
+            elements.bots.innerHTML =
+                `<tr><td colspan="6" class="empty">Failed: ${error.message}</td></tr>`;
+        }
     } finally {
         elements.refresh.disabled = false;
     }
 }
+
 
 
 elements.bots.addEventListener("click", async (event) => {
@@ -289,6 +378,36 @@ elements.bots.addEventListener("click", async (event) => {
         await sendCommand(botId, button.dataset.command);
     }
 });
+
+
+elements.killSwitchButton.addEventListener("click", async () => {
+    const currentlyEnabled =
+        elements.killSwitchStatus.textContent.startsWith("ENABLED");
+
+    const nextEnabled = !currentlyEnabled;
+
+    if (nextEnabled && !window.confirm(
+        "Enable the global kill switch? New orders will be blocked."
+    )) {
+        return;
+    }
+
+    elements.killSwitchButton.disabled = true;
+
+    try {
+        await apiRequest("/api/system/kill-switch", {
+            method: "PUT",
+            body: JSON.stringify({ enabled: nextEnabled }),
+        });
+
+        await loadKillSwitch();
+    } catch (error) {
+        showMessage(`Kill switch update failed: ${error.message}`, "error");
+    } finally {
+        elements.killSwitchButton.disabled = false;
+    }
+});
+
 
 elements.refresh.addEventListener("click", refreshDashboard);
 

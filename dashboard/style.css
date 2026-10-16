@@ -137,12 +137,14 @@ button:disabled {
     border-radius: 6px;
 }
 
+
 .summary-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
     margin-bottom: 24px;
 }
+
 
 .summary-card,
 .panel {
@@ -381,4 +383,29 @@ footer {
     .panel {
         padding: 15px;
     }
+}
+
+
+.kill-switch-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  margin-bottom: 20px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+}
+
+.kill-switch-panel h3 {
+  margin: 0 0 6px;
+}
+
+.kill-switch-panel p {
+  margin: 0 0 8px;
+  color: #6b7280;
+}
+
+#kill-switch-status {
+  font-size: 14px;
 }

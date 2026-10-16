@@ -364,6 +364,13 @@ func main() {
 				fiber.StatusBadRequest, "invalid command",
 			)
 		}
+		// Block new bot processes while the global kill-switch is enabled.
+		if killSwitch.Load() &&
+			(payload.Command == "start" || payload.Command == "restart") {
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+				"error": "Global kill switch is enabled; new bot processes are blocked",
+			})
+		}
 
 		ctx, cancel := context.WithTimeout(
 			context.Background(), 10*time.Second,
